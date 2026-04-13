@@ -91,7 +91,7 @@ export abstract class BasePipeline {
   async getProduct(productId: string): Promise<{ id: string; name: string; category: string; description: string | null; brand_name: string | null } | null> {
     const { data, error } = await supabaseServer
       .from('products')
-      .select('id, name, category, description, brand:brands(name)')
+      .select('id, name, category, description, brand:brands!products_brand_id_fkey(name)')
       .eq('id', productId)
       .single()
 

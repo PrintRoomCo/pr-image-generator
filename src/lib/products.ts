@@ -13,8 +13,8 @@ export async function getProductsWithViews(): Promise<ProductWithViews[]> {
       id,
       name,
       description,
-      category,
-      brand:brands(id, name)
+      category:categories!category_id(name),
+      brand:brands!brand_id(id, name)
     `)
     .eq('is_active', true)
     .order('name')
@@ -48,7 +48,7 @@ export async function getProductsWithViews(): Promise<ProductWithViews[]> {
       id: product.id,
       name: product.name,
       description: product.description,
-      category: product.category,
+      category: Array.isArray(product.category) ? product.category[0]?.name || '' : (product.category as any)?.name || '',
       brand: Array.isArray(product.brand) ? product.brand[0] || null : product.brand,
       frontImageUrl: frontImage?.file_url || null,
       hasFrontImage: !!frontImage,
