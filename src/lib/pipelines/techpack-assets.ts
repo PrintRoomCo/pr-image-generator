@@ -35,7 +35,7 @@ export class TechpackAssetsPipeline extends BasePipeline {
 
         // Insert into techpack_assets table
         const { data: record, error } = await supabaseServer
-          .from('techpack_assets')
+          .from('generated_techpack_assets')
           .insert({
             product_id: productId,
             asset_type: assetType,

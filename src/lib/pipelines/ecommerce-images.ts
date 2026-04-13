@@ -36,7 +36,7 @@ export class EcommerceImagesPipeline extends BasePipeline {
 
         // Insert into ecommerce_images table
         const { data: record, error } = await supabaseServer
-          .from('ecommerce_images')
+          .from('generated_ecommerce_images')
           .insert({
             product_id: productId,
             image_type: imageType,

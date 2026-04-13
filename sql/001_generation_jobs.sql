@@ -103,7 +103,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================================
 -- Ecommerce images output table
 -- ============================================================
-CREATE TABLE IF NOT EXISTS ecommerce_images (
+CREATE TABLE IF NOT EXISTS generated_ecommerce_images (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID NOT NULL REFERENCES products(id),
   image_type TEXT NOT NULL CHECK (image_type IN ('lifestyle', 'white-background', 'hero', 'size-guide')),
@@ -112,13 +112,13 @@ CREATE TABLE IF NOT EXISTS ecommerce_images (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_ecommerce_images_product
-  ON ecommerce_images(product_id, image_type);
+CREATE INDEX IF NOT EXISTS idx_generated_ecommerce_images_product
+  ON generated_ecommerce_images(product_id, image_type);
 
 -- ============================================================
 -- Tech pack assets output table
 -- ============================================================
-CREATE TABLE IF NOT EXISTS techpack_assets (
+CREATE TABLE IF NOT EXISTS generated_techpack_assets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID NOT NULL REFERENCES products(id),
   asset_type TEXT NOT NULL CHECK (asset_type IN ('flat-drawing', 'construction-detail', 'measurement-diagram', 'fabric-callout', 'color-spec')),
@@ -127,5 +127,5 @@ CREATE TABLE IF NOT EXISTS techpack_assets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_techpack_assets_product
-  ON techpack_assets(product_id, asset_type);
+CREATE INDEX IF NOT EXISTS idx_generated_techpack_assets_product
+  ON generated_techpack_assets(product_id, asset_type);
