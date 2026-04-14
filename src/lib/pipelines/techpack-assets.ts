@@ -1,10 +1,11 @@
 import { getReplicate, NANO_BANANA_PRO_MODEL } from '@/lib/ai/replicate-client'
 import { supabaseServer } from '@/lib/supabase-server'
-import { BasePipeline, type PipelineResult } from './base-pipeline'
+import { BasePipeline } from './base-pipeline'
 import { buildTechpackPrompt, TECHPACK_NEGATIVE_PROMPT } from '@/lib/prompts/techpack-prompts'
 import type { TechpackAssetType } from '@/types/techpacks'
 import type { JobType } from '@/types/jobs'
 import type { StorageCategory } from '@/lib/storage'
+import type { PipelineResult } from '@/types/pipeline-results'
 
 export class TechpackAssetsPipeline extends BasePipeline {
   readonly jobType: JobType = 'techpack'
@@ -16,8 +17,8 @@ export class TechpackAssetsPipeline extends BasePipeline {
 
     const assetTypes = (config.assetTypes || ['flat-drawing', 'measurement-diagram']) as TechpackAssetType[]
     const result: PipelineResult = {
-      productId,
-      productName: product.name,
+      itemId: productId,
+      itemName: product.name,
       generatedItems: [],
       errors: [],
     }

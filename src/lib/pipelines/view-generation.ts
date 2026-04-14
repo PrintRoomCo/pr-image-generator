@@ -1,6 +1,6 @@
 import { getReplicate, NANO_BANANA_PRO_MODEL } from '@/lib/ai/replicate-client'
 import { supabaseServer } from '@/lib/supabase-server'
-import { BasePipeline, type PipelineResult } from './base-pipeline'
+import { BasePipeline } from './base-pipeline'
 import {
   buildViewPrompt,
   getReferenceImageUrl,
@@ -11,6 +11,7 @@ import {
 import type { ViewType } from '@/types/views'
 import type { JobType } from '@/types/jobs'
 import type { StorageCategory } from '@/lib/storage'
+import type { PipelineResult } from '@/types/pipeline-results'
 
 export class ViewGenerationPipeline extends BasePipeline {
   readonly jobType: JobType = 'view'
@@ -22,8 +23,8 @@ export class ViewGenerationPipeline extends BasePipeline {
 
     const views = (config.views || ['left', 'right', 'back']) as ViewType[]
     const result: PipelineResult = {
-      productId,
-      productName: product.name,
+      itemId: productId,
+      itemName: product.name,
       generatedItems: [],
       errors: [],
     }

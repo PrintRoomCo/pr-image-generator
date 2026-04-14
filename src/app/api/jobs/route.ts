@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { isReplicateConfigured, estimateCost } from '@/lib/ai/replicate-client'
+import { normalizeGenerationJob, normalizeGenerationJobs } from '@/types/jobs'
 import type { CreateJobRequest, JobType } from '@/types/jobs'
+import { getEcommerceInputCount, getEcommerceTotalImages, isEcommerceGenerationConfig } from '@/types/ecommerce'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,17 +12,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CreateJobRequest = await request.json()
-    const { jobType, productIds, config } = body
+    const { jobType, config } = body
 
-    if (!jobType || !productIds?.length || !config) {
-      return NextResponse.json({ error: 'Missing required fields: jobType, productIds, config' }, { status: 400 })
+    if (!jobType || !config) {
+      return NextResponse.json({ error: 'Missing required fields: jobType, config' }, { status: 400 })
     }
 
-    // Calculate total images for cost estimate
     let totalImages = 0
-    if ('views' in config) totalImages = productIds.length * config.views.length
-    else if ('imageTypes' in config) totalImages = productIds.length * config.imageTypes.length
-    else if ('assetTypes' in config) totalImages = productIds.length * config.assetTypes.length
+    let totalUnits = 0
+    let productIds: string[] = 'productIds' in body && Array.isArray(body.productIds) ? body.productIds : []
+
+    if (jobType === 'ecommerce') {
+      if (!isEcommerceGenerationConfig(config) || config.inputs.length === 0 || config.imageTypes.length === 0 || !config.prompt.trim()) {
+        return NextResponse.json({ error: 'Invalid ecommerce job config' }, { status: 400 })
+      }
+
+      productIds = productIds.length > 0 ? productIds : config.inputs.map(input => input.id)
+      totalUnits = getEcommerceInputCount(config)
+      totalImages = getEcommerceTotalImages(config)
+    } else {
+      if (!productIds.length) {
+        return NextResponse.json({ error: 'Missing required field: productIds' }, { status: 400 })
+      }
+
+      totalUnits = productIds.length
+      if ('views' in config) totalImages = productIds.length * config.views.length
+      else if ('assetTypes' in config) totalImages = productIds.length * config.assetTypes.length
+      else return NextResponse.json({ error: 'Invalid job config' }, { status: 400 })
+    }
 
     const { data: job, error } = await supabaseServer
       .from('generation_jobs')
@@ -29,7 +48,7 @@ export async function POST(request: NextRequest) {
         product_ids: productIds,
         config,
         status: 'pending',
-        progress: { completed: 0, total: productIds.length },
+        progress: { completed: 0, total: totalUnits },
       })
       .select()
       .single()
@@ -39,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      job,
+      job: normalizeGenerationJob(job),
       totalImages,
       costEstimate: estimateCost(totalImages, jobType === 'view'),
     })
@@ -71,7 +90,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(jobs)
+    return NextResponse.json(normalizeGenerationJobs(jobs || []))
   } catch (error) {
     console.error('[GET /api/jobs] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

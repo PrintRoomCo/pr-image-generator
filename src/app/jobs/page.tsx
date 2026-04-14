@@ -35,7 +35,7 @@ export default function AllJobsPage() {
         <select
           value={typeFilter}
           onChange={e => setTypeFilter(e.target.value as JobType | 'all')}
-          className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <option value="all">All Types</option>
           <option value="view">Design Tool Views</option>
@@ -46,7 +46,7 @@ export default function AllJobsPage() {
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value as JobStatus | 'all')}
-          className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>

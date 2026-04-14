@@ -6,6 +6,8 @@ import { ProductSelector } from '@/components/products/product-selector'
 import { CostEstimator } from '@/components/shared/cost-estimator'
 import { JobProgress } from '@/components/jobs/job-progress'
 import { JobList } from '@/components/jobs/job-list'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import type { ProductWithViews } from '@/types/products'
 import type { TechpackAssetType } from '@/types/techpacks'
 import type { GenerationJob } from '@/types/jobs'
@@ -92,7 +94,7 @@ export default function TechpacksPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="border border-border rounded-lg p-4">
+          <Card className="p-4">
             <h3 className="font-medium mb-3">Asset Types</h3>
             <div className="space-y-3">
               {AVAILABLE_TYPES.map(type => (
@@ -106,7 +108,7 @@ export default function TechpacksPage() {
                       else next.delete(type.value)
                       setSelectedTypes(next)
                     }}
-                    className="rounded mt-0.5"
+                    className="h-4 w-4 rounded border-input mt-0.5"
                   />
                   <div>
                     <span className="font-medium">{type.label}</span>
@@ -115,17 +117,18 @@ export default function TechpacksPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </Card>
 
           <CostEstimator totalImages={totalImages} includeBackgroundRemoval={false} />
 
-          <button
+          <Button
             onClick={handleGenerate}
             disabled={selectedIds.size === 0 || selectedTypes.size === 0 || generating}
-            className="w-full py-3 bg-accent text-accent-foreground rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            className="w-full"
+            size="lg"
           >
             {generating ? 'Starting...' : `Generate ${totalImages} Assets`}
-          </button>
+          </Button>
 
           {activeJob && <JobProgress job={activeJob} />}
         </div>

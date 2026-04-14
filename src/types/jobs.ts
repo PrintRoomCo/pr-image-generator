@@ -1,13 +1,15 @@
 import type { ViewType } from './views'
-import type { EcommerceImageType } from './ecommerce'
+import type { EcommerceGenerationConfig } from './ecommerce'
 import type { TechpackAssetType } from './techpacks'
+import type { PipelineResult } from './pipeline-results'
+import { normalizePipelineResults } from './pipeline-results'
 
 export type JobType = 'view' | 'ecommerce' | 'techpack'
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 export type JobConfig =
   | { views: ViewType[] }
-  | { imageTypes: EcommerceImageType[] }
+  | EcommerceGenerationConfig
   | { assetTypes: TechpackAssetType[] }
 
 export interface JobProgress {
@@ -24,7 +26,7 @@ export interface GenerationJob {
   config: JobConfig
   status: JobStatus
   progress: JobProgress
-  results: unknown[]
+  results: PipelineResult[]
   error_message?: string
   source: string
   created_at: string
@@ -33,8 +35,34 @@ export interface GenerationJob {
   completed_at?: string
 }
 
-export interface CreateJobRequest {
-  jobType: JobType
-  productIds: string[]
-  config: JobConfig
+type GenerationJobRecord = Omit<GenerationJob, 'results'> & {
+  results?: unknown
 }
+
+export function normalizeGenerationJob(job: GenerationJobRecord): GenerationJob {
+  return {
+    ...job,
+    results: normalizePipelineResults(job.results),
+  }
+}
+
+export function normalizeGenerationJobs(jobs: GenerationJobRecord[]): GenerationJob[] {
+  return jobs.map(normalizeGenerationJob)
+}
+
+export type CreateJobRequest =
+  | {
+      jobType: 'view'
+      productIds: string[]
+      config: { views: ViewType[] }
+    }
+  | {
+      jobType: 'techpack'
+      productIds: string[]
+      config: { assetTypes: TechpackAssetType[] }
+    }
+  | {
+      jobType: 'ecommerce'
+      productIds?: string[]
+      config: EcommerceGenerationConfig
+    }

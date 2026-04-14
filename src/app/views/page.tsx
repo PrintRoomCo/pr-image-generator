@@ -6,6 +6,8 @@ import { ProductSelector } from '@/components/products/product-selector'
 import { CostEstimator } from '@/components/shared/cost-estimator'
 import { JobProgress } from '@/components/jobs/job-progress'
 import { JobList } from '@/components/jobs/job-list'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import type { ProductWithViews } from '@/types/products'
 import type { ViewType } from '@/types/views'
 import type { GenerationJob } from '@/types/jobs'
@@ -32,7 +34,6 @@ export default function ViewsPage() {
     }).catch(() => setLoading(false))
   }, [])
 
-  // Poll active job
   useEffect(() => {
     if (!activeJob || !['pending', 'processing'].includes(activeJob.status)) return
     const interval = setInterval(async () => {
@@ -41,7 +42,6 @@ export default function ViewsPage() {
       setActiveJob(job)
       if (job.status === 'completed' || job.status === 'failed') {
         clearInterval(interval)
-        // Refresh recent jobs
         fetch('/api/jobs?jobType=view&limit=10').then(r => r.json()).then(setRecentJobs)
       }
     }, 2000)
@@ -53,7 +53,6 @@ export default function ViewsPage() {
     setGenerating(true)
 
     try {
-      // Create job
       const createRes = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,8 +64,6 @@ export default function ViewsPage() {
       })
       const { job } = await createRes.json()
       setActiveJob(job)
-
-      // Trigger processing
       await fetch('/api/process?jobType=view', { method: 'POST' })
     } catch (error) {
       console.error('Failed to start generation:', error)
@@ -96,7 +93,7 @@ export default function ViewsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="border border-border rounded-lg p-4">
+          <Card className="p-4">
             <h3 className="font-medium mb-3">Views to Generate</h3>
             <div className="space-y-2">
               {AVAILABLE_VIEWS.map(view => (
@@ -110,23 +107,24 @@ export default function ViewsPage() {
                       else next.delete(view)
                       setSelectedViews(next)
                     }}
-                    className="rounded"
+                    className="h-4 w-4 rounded border-input"
                   />
                   <span className="capitalize">{view}</span>
                 </label>
               ))}
             </div>
-          </div>
+          </Card>
 
           <CostEstimator totalImages={totalImages} includeBackgroundRemoval />
 
-          <button
+          <Button
             onClick={handleGenerate}
             disabled={selectedIds.size === 0 || selectedViews.size === 0 || generating}
-            className="w-full py-3 bg-accent text-accent-foreground rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            className="w-full"
+            size="lg"
           >
             {generating ? 'Starting...' : `Generate ${totalImages} Images`}
-          </button>
+          </Button>
 
           {activeJob && <JobProgress job={activeJob} />}
         </div>

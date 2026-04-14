@@ -2,18 +2,7 @@ import { supabaseServer } from '@/lib/supabase-server'
 import { uploadGeneratedImage, type StorageCategory } from '@/lib/storage'
 import { removeBackground, isBackgroundRemovalEnabled } from '@/lib/ai/background-remover'
 import type { JobType, GenerationJob, JobProgress } from '@/types/jobs'
-
-export interface PipelineResult {
-  productId: string
-  productName: string
-  generatedItems: Array<{
-    type: string
-    replicateOutputUrl: string
-    storageUrl: string
-    recordId: string
-  }>
-  errors: string[]
-}
+import type { PipelineResult } from '@/types/pipeline-results'
 
 export abstract class BasePipeline {
   abstract readonly jobType: JobType
@@ -63,7 +52,7 @@ export abstract class BasePipeline {
   async completeJob(jobId: string, results: PipelineResult[], status: 'completed' | 'failed' = 'completed', errorMessage?: string): Promise<void> {
     const { error } = await supabaseServer.rpc('complete_generation_job', {
       p_job_id: jobId,
-      p_results: JSON.stringify(results),
+      p_results: results,
       p_status: status,
       p_error_message: errorMessage || null,
     })
@@ -112,7 +101,7 @@ export abstract class BasePipeline {
    */
   async uploadImage(
     replicateUrl: string,
-    productId: string,
+    entityId: string,
     filename: string,
     applyBgRemoval: boolean = true
   ): Promise<string> {
@@ -127,7 +116,7 @@ export abstract class BasePipeline {
       }
     }
 
-    return uploadGeneratedImage(imageUrl, productId, this.storageCategory, filename)
+    return uploadGeneratedImage(imageUrl, entityId, this.storageCategory, filename)
   }
 
   /**
@@ -163,8 +152,8 @@ export abstract class BasePipeline {
           const errorMessage = error instanceof Error ? error.message : String(error)
           console.error(`[${this.jobType}] Failed product ${productId}:`, errorMessage)
           results.push({
-            productId,
-            productName: product?.name || 'Unknown',
+            itemId: productId,
+            itemName: product?.name || 'Unknown',
             generatedItems: [],
             errors: [errorMessage],
           })

@@ -2,48 +2,59 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { LayoutDashboard, Layers, ShoppingBag, FileBox, ListTodo } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard', icon: '~' },
-  { href: '/views', label: 'Design Tool Views', icon: 'V' },
-  { href: '/ecommerce', label: 'Ecommerce Images', icon: 'E' },
-  { href: '/techpacks', label: 'Tech Pack Assets', icon: 'T' },
-  { href: '/jobs', label: 'All Jobs', icon: 'J' },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/views', label: 'Design Tool Views', icon: Layers },
+  { href: '/ecommerce', label: 'Upload Ecommerce Images', icon: ShoppingBag },
+  { href: '/techpacks', label: 'Tech Pack Assets', icon: FileBox },
+  { href: '/jobs', label: 'All Jobs', icon: ListTodo },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 bg-primary text-primary-foreground min-h-screen flex flex-col">
-      <div className="p-6 border-b border-white/10">
-        <h1 className="text-lg font-bold">PR Image Generator</h1>
-        <p className="text-sm opacity-60 mt-1">The Print Room NZ</p>
+    <aside className="w-[260px] flex flex-col border-r bg-background min-h-screen">
+      <div className="flex h-14 items-center border-b px-4">
+        <div>
+          <h1 className="text-sm font-bold tracking-tight">PR Image Generator</h1>
+          <p className="text-xs text-muted-foreground">The Print Room NZ</p>
+        </div>
       </div>
-      <nav className="flex-1 p-4">
-        <ul className="space-y-1">
-          {NAV_ITEMS.map(item => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-            return (
-              <li key={item.href}>
+      <nav className="flex-1 overflow-y-auto py-2">
+        <div className="px-3 py-2">
+          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Pipelines
+          </p>
+          <div className="space-y-1">
+            {NAV_ITEMS.map(item => {
+              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+              const Icon = item.icon
+              return (
                 <Link
+                  key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                    isActive
-                      ? 'bg-white/15 text-white font-medium'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
-                  }`}
+                  className={cn(
+                    'group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isActive && 'bg-accent text-accent-foreground'
+                  )}
                 >
-                  <span className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-xs font-mono">
-                    {item.icon}
-                  </span>
-                  {item.label}
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.label}</span>
                 </Link>
-              </li>
-            )
-          })}
-        </ul>
+              )
+            })}
+          </div>
+        </div>
       </nav>
+      <div className="border-t px-4 py-3">
+        <p className="text-xs text-muted-foreground">AI-powered generation</p>
+      </div>
     </aside>
   )
 }

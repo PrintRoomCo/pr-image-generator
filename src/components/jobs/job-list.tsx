@@ -2,17 +2,20 @@
 
 import Link from 'next/link'
 import type { GenerationJob } from '@/types/jobs'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
+import { getEcommerceJobSummary, isEcommerceGenerationConfig } from '@/types/ecommerce'
 
 interface JobListProps {
   jobs: GenerationJob[]
   basePath?: string
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+const STATUS_VARIANT: Record<string, 'warning' | 'info' | 'success' | 'destructive'> = {
+  pending: 'warning',
+  processing: 'info',
+  completed: 'success',
+  failed: 'destructive',
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -31,12 +34,12 @@ export function JobList({ jobs, basePath }: JobListProps) {
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <Card className="overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-muted">
           <tr>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Products</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Inputs</th>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Progress</th>
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Created</th>
@@ -51,17 +54,19 @@ export function JobList({ jobs, basePath }: JobListProps) {
             return (
               <tr key={job.id} className="hover:bg-muted/50 transition-colors">
                 <td className="px-4 py-3">
-                  <Link href={href} className="font-medium text-accent hover:underline">
+                  <Link href={href} className="font-medium text-foreground hover:underline">
                     {TYPE_LABELS[job.job_type] || job.job_type}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {job.product_ids.length} product{job.product_ids.length !== 1 ? 's' : ''}
+                  {job.job_type === 'ecommerce' && isEcommerceGenerationConfig(job.config)
+                    ? getEcommerceJobSummary(job.config)
+                    : `${job.product_ids.length} product${job.product_ids.length !== 1 ? 's' : ''}`}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[job.status] || ''}`}>
+                  <Badge variant={STATUS_VARIANT[job.status] || 'default'}>
                     {job.status}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {job.progress.completed}/{job.progress.total}
@@ -74,6 +79,6 @@ export function JobList({ jobs, basePath }: JobListProps) {
           })}
         </tbody>
       </table>
-    </div>
+    </Card>
   )
 }

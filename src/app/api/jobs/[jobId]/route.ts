@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
+import { normalizeGenerationJob } from '@/types/jobs'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
@@ -17,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
-    return NextResponse.json(job)
+    return NextResponse.json(normalizeGenerationJob(job))
   } catch (error) {
     console.error('[GET /api/jobs/[jobId]] Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -2,9 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Layers, ShoppingBag, FileBox } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { JobList } from '@/components/jobs/job-list'
+import { Card } from '@/components/ui/card'
 import type { GenerationJob } from '@/types/jobs'
+
+const PIPELINES = [
+  { href: '/views', label: 'Design Tool Views', description: 'Generate left, right, back views for the design tool', icon: Layers },
+  { href: '/ecommerce', label: 'Ecommerce Images', description: 'Upload product photos and generate lifestyle, hero, white-background, or size-guide imagery', icon: ShoppingBag },
+  { href: '/techpacks', label: 'Tech Pack Assets', description: 'Flat drawings, measurements, construction details', icon: FileBox },
+]
 
 export default function DashboardPage() {
   const [recentJobs, setRecentJobs] = useState<GenerationJob[]>([])
@@ -32,31 +40,35 @@ export default function DashboardPage() {
       <Header title="Dashboard" description="AI-powered product image generation" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Link href="/views" className="border border-border rounded-lg p-6 hover:border-accent transition-colors">
-          <h3 className="font-semibold text-lg">Design Tool Views</h3>
-          <p className="text-sm text-muted-foreground mt-1">Generate left, right, back views for the design tool</p>
-        </Link>
-        <Link href="/ecommerce" className="border border-border rounded-lg p-6 hover:border-accent transition-colors">
-          <h3 className="font-semibold text-lg">Ecommerce Images</h3>
-          <p className="text-sm text-muted-foreground mt-1">Lifestyle, white-background, hero banners, size guides</p>
-        </Link>
-        <Link href="/techpacks" className="border border-border rounded-lg p-6 hover:border-accent transition-colors">
-          <h3 className="font-semibold text-lg">Tech Pack Assets</h3>
-          <p className="text-sm text-muted-foreground mt-1">Flat drawings, measurements, construction details</p>
-        </Link>
+        {PIPELINES.map(pipeline => {
+          const Icon = pipeline.icon
+          return (
+            <Link key={pipeline.href} href={pipeline.href}>
+              <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <Icon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-base">{pipeline.label}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{pipeline.description}</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Recent Jobs', value: stats.total, color: 'text-foreground' },
-          { label: 'Processing', value: stats.processing, color: 'text-accent' },
+          { label: 'Processing', value: stats.processing, color: 'text-primary' },
           { label: 'Completed', value: stats.completed, color: 'text-success' },
           { label: 'Failed', value: stats.failed, color: 'text-destructive' },
         ].map(stat => (
-          <div key={stat.label} className="border border-border rounded-lg p-4">
+          <Card key={stat.label} className="p-4">
             <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-          </div>
+            <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+          </Card>
         ))}
       </div>
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import type { CreateJobRequest } from '@/types/jobs'
+import { getEcommerceInputCount, isEcommerceGenerationConfig } from '@/types/ecommerce'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,20 +14,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CreateJobRequest & { callbackUrl?: string } = await request.json()
-    const { jobType, productIds, config } = body
+    const { jobType, config } = body
+    const productIds = Array.isArray(body.productIds) ? body.productIds : []
 
-    if (!jobType || !productIds?.length || !config) {
+    if (!jobType || !config) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    const resolvedProductIds = jobType === 'ecommerce' && isEcommerceGenerationConfig(config)
+      ? (productIds.length > 0 ? productIds : config.inputs.map(input => input.id))
+      : productIds
+
+    if (jobType !== 'ecommerce' && resolvedProductIds.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const totalUnits = jobType === 'ecommerce' && isEcommerceGenerationConfig(config)
+      ? getEcommerceInputCount(config)
+      : resolvedProductIds.length
 
     const { data: job, error } = await supabaseServer
       .from('generation_jobs')
       .insert({
         job_type: jobType,
-        product_ids: productIds,
+        product_ids: resolvedProductIds,
         config,
         status: 'pending',
-        progress: { completed: 0, total: productIds.length },
+        progress: { completed: 0, total: totalUnits },
         source: 'design-tool-webhook',
       })
       .select()

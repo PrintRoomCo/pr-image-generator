@@ -3,7 +3,35 @@ import { nanoid } from 'nanoid'
 
 const BUCKET = 'generated-images'
 
-export type StorageCategory = 'design-tool-assets' | 'ecommerce' | 'techpacks'
+export type StorageCategory = 'design-tool-assets' | 'ecommerce' | 'ecommerce-source' | 'techpacks'
+
+function sanitizeFilename(filename: string): string {
+  const trimmed = filename.trim().toLowerCase()
+  return trimmed.replace(/[^a-z0-9._-]+/g, '-').replace(/-+/g, '-')
+}
+
+async function uploadBuffer(
+  buffer: Buffer,
+  storagePath: string,
+  contentType: string
+): Promise<string> {
+  const { error } = await supabaseServer.storage
+    .from(BUCKET)
+    .upload(storagePath, buffer, {
+      contentType,
+      upsert: false,
+    })
+
+  if (error) {
+    throw new Error(`Failed to upload to storage: ${error.message}`)
+  }
+
+  const { data: urlData } = supabaseServer.storage
+    .from(BUCKET)
+    .getPublicUrl(storagePath)
+
+  return urlData.publicUrl
+}
 
 /**
  * Upload an image from a URL to Supabase Storage in the generated-images bucket.
@@ -11,7 +39,7 @@ export type StorageCategory = 'design-tool-assets' | 'ecommerce' | 'techpacks'
  */
 export async function uploadGeneratedImage(
   imageUrl: string,
-  productId: string,
+  entityId: string,
   category: StorageCategory,
   filename: string
 ): Promise<string> {
@@ -24,25 +52,39 @@ export async function uploadGeneratedImage(
   const imageBuffer = Buffer.from(await response.arrayBuffer())
   const timestamp = Date.now()
   const uniqueId = nanoid(8)
-  const storagePath = `${category}/${productId}/${filename}-${timestamp}-${uniqueId}.png`
+  const storagePath = `${category}/${entityId}/${filename}-${timestamp}-${uniqueId}.png`
 
-  const { error } = await supabaseServer.storage
-    .from(BUCKET)
-    .upload(storagePath, imageBuffer, {
-      contentType: 'image/png',
-      upsert: false,
-    })
+  return uploadBuffer(imageBuffer, storagePath, 'image/png')
+}
 
-  if (error) {
-    throw new Error(`Failed to upload to storage: ${error.message}`)
+export async function uploadSourceImage(
+  file: File,
+  clientId: string
+): Promise<{
+  id: string
+  clientId: string
+  originalFilename: string
+  storageUrl: string
+  storagePath: string
+  mimeType: string
+  sizeBytes: number
+}> {
+  const sourceId = crypto.randomUUID()
+  const safeFilename = sanitizeFilename(file.name || `upload-${sourceId}.png`)
+  const storagePath = `ecommerce-source/${clientId}/${sourceId}-${safeFilename}`
+  const fileBuffer = Buffer.from(await file.arrayBuffer())
+  const mimeType = file.type || 'application/octet-stream'
+  const storageUrl = await uploadBuffer(fileBuffer, storagePath, mimeType)
+
+  return {
+    id: sourceId,
+    clientId,
+    originalFilename: file.name || safeFilename,
+    storageUrl,
+    storagePath,
+    mimeType,
+    sizeBytes: file.size,
   }
-
-  // Get public URL
-  const { data: urlData } = supabaseServer.storage
-    .from(BUCKET)
-    .getPublicUrl(storagePath)
-
-  return urlData.publicUrl
 }
 
 /**

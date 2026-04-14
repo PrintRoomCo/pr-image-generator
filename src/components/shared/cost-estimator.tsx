@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card'
+
 interface CostEstimatorProps {
   totalImages: number
   includeBackgroundRemoval?: boolean
@@ -11,7 +13,7 @@ export function CostEstimator({ totalImages, includeBackgroundRemoval = true }: 
   const bgCost = includeBackgroundRemoval ? totalImages * 0.003 : 0
 
   return (
-    <div className="bg-muted rounded-lg p-4 text-sm">
+    <Card className="bg-muted p-4 text-sm">
       <div className="flex justify-between">
         <span className="text-muted-foreground">Images to generate:</span>
         <span className="font-medium">{totalImages}</span>
@@ -27,6 +29,6 @@ export function CostEstimator({ totalImages, includeBackgroundRemoval = true }: 
           Includes ~${bgCost.toFixed(3)} for background removal
         </p>
       )}
-    </div>
+    </Card>
   )
 }

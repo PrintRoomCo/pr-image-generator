@@ -2,9 +2,11 @@
 
 import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { JobProgress } from '@/components/jobs/job-progress'
 import { JobResults } from '@/components/jobs/job-results'
+import { normalizePipelineResults } from '@/types/pipeline-results'
 import type { GenerationJob } from '@/types/jobs'
 
 export default function ViewJobDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
@@ -22,7 +24,6 @@ export default function ViewJobDetailPage({ params }: { params: Promise<{ jobId:
     fetchJob()
   }, [jobId])
 
-  // Poll if still processing
   useEffect(() => {
     if (!job || !['pending', 'processing'].includes(job.status)) return
     const interval = setInterval(async () => {
@@ -37,12 +38,19 @@ export default function ViewJobDetailPage({ params }: { params: Promise<{ jobId:
   if (loading) return <div className="text-muted-foreground">Loading...</div>
   if (!job) return <div className="text-destructive">Job not found</div>
 
+  const results = normalizePipelineResults(job.results)
+
   return (
     <div>
       <Header
         title="View Generation Job"
         description={`Job ${jobId.slice(0, 8)}...`}
-        action={<Link href="/views" className="text-sm text-accent hover:underline">Back to Views</Link>}
+        action={
+          <Link href="/views" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Views
+          </Link>
+        }
       />
 
       <div className="mb-6">
@@ -50,7 +58,7 @@ export default function ViewJobDetailPage({ params }: { params: Promise<{ jobId:
       </div>
 
       <h2 className="text-lg font-semibold mb-4">Results</h2>
-      <JobResults results={(job.results || []) as any[]} />
+      <JobResults results={results} />
     </div>
   )
 }

@@ -1,6 +1,8 @@
 'use client'
 
 import type { GenerationJob } from '@/types/jobs'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 interface JobProgressProps {
   job: GenerationJob
@@ -11,7 +13,7 @@ export function JobProgress({ job }: JobProgressProps) {
   const percentage = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <Card className="p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium">
           {status === 'processing' ? 'Processing...' : status === 'completed' ? 'Complete' : status === 'failed' ? 'Failed' : 'Pending'}
@@ -23,9 +25,10 @@ export function JobProgress({ job }: JobProgressProps) {
 
       <div className="w-full bg-muted rounded-full h-2.5">
         <div
-          className={`h-2.5 rounded-full transition-all duration-500 ${
-            status === 'failed' ? 'bg-destructive' : status === 'completed' ? 'bg-success' : 'bg-accent'
-          }`}
+          className={cn(
+            'h-2.5 rounded-full transition-all duration-500',
+            status === 'failed' ? 'bg-destructive' : status === 'completed' ? 'bg-success' : 'bg-primary'
+          )}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -39,6 +42,6 @@ export function JobProgress({ job }: JobProgressProps) {
       {job.error_message && (
         <p className="text-xs text-destructive mt-2">{job.error_message}</p>
       )}
-    </div>
+    </Card>
   )
 }
