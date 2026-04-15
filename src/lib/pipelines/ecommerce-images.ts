@@ -1,7 +1,12 @@
 import { getReplicate, NANO_BANANA_PRO_MODEL } from '@/lib/ai/replicate-client'
 import { BasePipeline } from './base-pipeline'
 import { buildEcommercePrompt, ECOMMERCE_NEGATIVE_PROMPT } from '@/lib/prompts/ecommerce-prompts'
+import { upsertGeneratedAsset } from '@/lib/generated-assets'
 import {
+  getEcommerceBriefSummary,
+  getEcommerceDestinationTags,
+  getEcommercePresetKey,
+  getEcommerceWorkflowType,
   isEcommerceGenerationConfig,
   type EcommerceGenerationConfig,
   type EcommerceImageType,
@@ -48,7 +53,18 @@ export class EcommerceImagesPipeline extends BasePipeline {
         })
 
         try {
-          results.push(await this.processInput(input, config))
+          const result = await this.processInput(input, config)
+
+          for (const item of result.generatedItems) {
+            const asset = await upsertGeneratedAsset({ job, config, result, item })
+            item.assetId = asset.id
+            item.assetStatus = asset.status
+            item.workflowType = asset.workflowType
+            item.presetKey = asset.presetKey
+            item.destinationTags = asset.destinationTags
+          }
+
+          results.push(result)
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error)
           console.error(`[ecommerce] Failed input ${input.id}:`, errorMessage)
@@ -65,6 +81,10 @@ export class EcommerceImagesPipeline extends BasePipeline {
             })),
             prompt: config.prompt,
             mode: config.mode,
+            workflowType: getEcommerceWorkflowType(config),
+            presetKey: getEcommercePresetKey(config),
+            briefSummary: getEcommerceBriefSummary(config),
+            destinationTags: getEcommerceDestinationTags(config),
           })
         }
       }
@@ -101,6 +121,10 @@ export class EcommerceImagesPipeline extends BasePipeline {
       })),
       prompt: config.prompt,
       mode: config.mode,
+      workflowType: getEcommerceWorkflowType(config),
+      presetKey: getEcommercePresetKey(config),
+      briefSummary: getEcommerceBriefSummary(config),
+      destinationTags: getEcommerceDestinationTags(config),
     }
 
     const orderedSources = [...input.sources].sort((left, right) => {
@@ -111,7 +135,12 @@ export class EcommerceImagesPipeline extends BasePipeline {
 
     for (const imageType of config.imageTypes) {
       try {
-        const replicateUrl = await this.generateEcommerceImage(imageType, input, config.prompt, orderedSources.map(source => source.storageUrl))
+        const replicateUrl = await this.generateEcommerceImage(
+          imageType,
+          input,
+          config,
+          orderedSources.map(source => source.storageUrl)
+        )
         const applyBgRemoval = imageType === 'white-background'
         const storageUrl = await this.uploadImage(replicateUrl, input.id, imageType, applyBgRemoval)
 
@@ -134,14 +163,10 @@ export class EcommerceImagesPipeline extends BasePipeline {
   private async generateEcommerceImage(
     imageType: EcommerceImageType,
     input: EcommerceInputItem,
-    userPrompt: string,
+    config: EcommerceGenerationConfig,
     sourceUrls: string[]
   ): Promise<string> {
-    const prompt = buildEcommercePrompt(imageType, {
-      inputLabel: input.label,
-      prompt: userPrompt,
-      referenceCount: sourceUrls.length,
-    })
+    const prompt = buildEcommercePrompt(imageType, { config, inputLabel: input.label, referenceCount: sourceUrls.length })
 
     const maxRetries = 3
     let lastError: Error | null = null
